@@ -1,36 +1,23 @@
-import asyncio
-import json
-from typing import Any
+from typing import Any, Dict
 
-# import pandas as pd
-# import requests
-import websockets
+import pandas as pd
+
+import deribit as dbt
 
 
-def get_deribit_options_data() -> dict[str, Any]:
-    # Get the data from the Deribit API
-    # ...
-    msg = {
-        "jsonrpc": "2.0",
-        "id": 8772,
-        "method": "public/get_book_summary_by_currency",
-        "params": {"currency": "BTC", "kind": "option"},
-    }
+def get_data(exchange: str) -> pd.DataFrame:
+    if exchange == "deribit":
+        # For Production
+        # data: Dict[str, Any] = dbt.get_deribit_options_data()
+        # df = pd.DataFrame(data["result"])
 
-    async def call_api(msg):
-        async with websockets.connect("wss://test.deribit.com/ws/api/v2") as websocket:
-            await websocket.send(msg)
-            while websocket.open:
-                response = await websocket.recv()
-                # do something with the response...
-                response_json = json.loads(response)
-                return response_json
+        # For Testing
+        df = pd.read_csv("deribit_options.csv")
 
-    data = asyncio.get_event_loop().run_until_complete(call_api(json.dumps(msg)))
-    if data is None:
-        raise ValueError("No data returned from Deribit API")
-    return data
+        # df.to_csv("deribit_options.csv", index=False)
 
-
-# data = get_deribit_options_data()
-# print(data))
+        # clean up the data
+        df = dbt.clean(df)
+        return df
+    else:
+        return None
