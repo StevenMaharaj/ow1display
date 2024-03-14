@@ -17,10 +17,20 @@ def N(d):
 
 
 def d1f(St, K, t, T, r, sigma):
-    d1 = (math.log(St / K) + (r + 0.5 * sigma**2) * (T - t)) / (
-        sigma * math.sqrt(T - t)
-    )
-    return d1
+    try:
+        d1 = (math.log(St / K) + (r + 0.5 * sigma**2) * (T - t)) / (
+            sigma * math.sqrt(T - t)
+        )
+        return d1
+    except ZeroDivisionError:
+        print("ZeroDivisionError: singular point")
+        print("St: ", St)
+        print("K: ", K)
+        print("t: ", t)
+        print("T: ", T)
+        print("r: ", r)
+        print("sigma: ", sigma)
+        raise ZeroDivisionError
 
 
 def BSM_call_value(

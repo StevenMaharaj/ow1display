@@ -1,6 +1,6 @@
 import pytest
 
-from ..vol import IV
+from ..optn.vol import IV
 
 
 def test_newton_vol():

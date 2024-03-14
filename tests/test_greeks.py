@@ -1,7 +1,7 @@
 import pytest
 
-from .. import bs
-from ..vol import IV
+from ..optn import bs
+from ..optn.vol import IV
 
 
 def test_delta():

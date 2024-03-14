@@ -7,6 +7,8 @@ import pandas as pd
 import websockets
 from dateutil import tz
 
+from optn import bs, vol
+
 
 def fetch_data() -> dict[str, Any]:
     # Get the data from the Deribit API
@@ -36,6 +38,8 @@ def fetch_data() -> dict[str, Any]:
 def clean(df_raw: pd.DataFrame) -> pd.DataFrame:
     # Clean up the data
     # ...
+    ms_in_year = 365.25 * 24 * 60 * 60 * 1000
+
     df_raw.dropna(axis=0, inplace=True)
     df = df_raw.rename(
         {
@@ -43,22 +47,43 @@ def clean(df_raw: pd.DataFrame) -> pd.DataFrame:
             "ask_price": "ask",
             "bid_price": "bid",
             "interest_rate": "r",
+            "creation_timestamp": "open_ts",
+            "mark_iv": "IV",
+            "underlying_price": "S",
         },
         axis=1,
     )
     df["mid"] = (df["ask"] + df["bid"]) * 0.5
-    df = df[["symbol", "bid", "mid", "ask", "r"]]
+    df = df[["symbol", "bid", "S", "mid", "ask", "r", "open_ts", "IV"]]
 
     if type(df) is not pd.DataFrame:
         raise ValueError("Data is not a pandas DataFrame")
 
-    df["strike"] = df["symbol"].str.extract(r"-(\d+00)-").astype(float)
+    df["K"] = df["symbol"].str.extract(r"-(\d+00)-").astype(float)
+    ts_now = datetime.now(tz=tz.tzutc()).timestamp()
+    df["t"] = [ts_now / ms_in_year] * len(df)
     explist = (
         df["symbol"].str.extract(r"(\d{2}[A-Z]+\d{2})").astype(str).values.flatten()
     )
     exp = list(map(exp_to_date, explist))
 
     df["expiry"] = exp
+    df["T"] = df["expiry"].apply(lambda x: x.timestamp() / ms_in_year)
+    df = df[df["T"] > df["t"]]
+    df["Tt"] = df["T"] - df["t"]
+    df["d"] = df.apply(
+        lambda x: bs.BSM_call_delta(x["S"], x["K"], x["t"], x["T"], x["r"], x["IV"]),
+        axis=1,
+    )
+    df["g"] = df.apply(
+        lambda x: bs.BSM_gamma(x["S"], x["K"], x["t"], x["T"], x["r"], x["IV"]), axis=1
+    )
+    # df["IV"] = df.apply(
+    #     lambda x: vol.IV(x["mid"], x["K"], x["r"], x["t"], x["T"]).newton_vol(x["mid"]),
+    #     axis=1,
+    # )
+    if type(df) is not pd.DataFrame:
+        raise ValueError("Data is not a pandas DataFrame")
     return df
 
 

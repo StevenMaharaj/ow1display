@@ -11,7 +11,7 @@ class IV:
     t: float
     T: float
 
-    def newton_vol(self, option_price: float, sigma_est=0.2, tol=0.0001, max_iter=100):
+    def newton_vol(self, option_price: float, sigma_est=2.0, tol=0.0001, max_iter=100):
         sigma = sigma_est
         for _ in range(max_iter):
             price = bs.BSM_call_value(self.S, self.K, self.t, self.T, self.r, sigma)
@@ -19,5 +19,13 @@ class IV:
             diff = option_price - price
             if abs(diff) < tol:
                 return sigma
-            sigma = sigma + diff / vega
+            try:
+                sigma = sigma + diff / vega
+            except ZeroDivisionError:
+                print("ZeroDivisionError")
+                print("option_price:", option_price)
+                print("price:", price)
+                print("vega:", vega)
+                return 0
+
         return sigma
