@@ -6,6 +6,10 @@ name = "pypi"
 [packages]
 websockets = "*"
 pandas = "*"
+numba = "*"
+scipy = "*"
+matplotlib = "*"
+pytest = "*"
 
 [dev-packages]
 

@@ -46,7 +46,8 @@ def clean(df_raw: pd.DataFrame) -> pd.DataFrame:
         },
         axis=1,
     )
-    df = df[["symbol", "ask", "bid", "r"]]
+    df["mid"] = (df["ask"] + df["bid"]) * 0.5
+    df = df[["symbol", "bid", "mid", "ask", "r"]]
 
     if type(df) is not pd.DataFrame:
         raise ValueError("Data is not a pandas DataFrame")
